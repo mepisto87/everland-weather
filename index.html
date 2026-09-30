@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>에버랜드 수학여행 날씨</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #2563eb;
+      --soft: #eef4ff;
+      --warn: #fff7ed;
+      --ok: #ecfdf5;
+      --shadow: 0 8px 24px rgba(23,32,51,.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR",
+                   "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+    }
+    .wrap {
+      width: min(720px, 100%);
+      margin: 0 auto;
+      padding: 18px 14px 36px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #ffffff, #eef4ff);
+      border: 1px solid #e7eefc;
+      border-radius: 24px;
+      padding: 22px 18px;
+      box-shadow: var(--shadow);
+    }
+    h1 {
+      font-size: clamp(24px, 6vw, 34px);
+      line-height: 1.18;
+      margin: 0 0 8px;
+      letter-spacing: -.03em;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .now-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .now-main, .now-side {
+      background: rgba(255,255,255,.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .now-temp {
+      font-size: clamp(40px, 12vw, 64px);
+      font-weight: 800;
+      letter-spacing: -.05em;
+      line-height: 1;
+    }
+    .weather-label {
+      font-size: 17px;
+      font-weight: 700;
+      margin-top: 7px;
+    }
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid #f0f2f5;
+      font-size: 14px;
+    }
+    .metric:last-child { border-bottom: 0; }
+    .metric span:first-child { color: var(--muted); }
+    .section {
+      margin-top: 16px;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid #eef0f3;
+    }
+    .section h2 {
+      font-size: 19px;
+      margin: 0 0 12px;
+      letter-spacing: -.02em;
+    }
+    .trip-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .summary-box {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 13px 8px;
+      text-align: center;
+    }
+    .summary-box .big {
+      font-size: 20px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+    .summary-box .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .hourly {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(92px, 1fr);
+      gap: 10px;
+      overflow-x: auto;
+      padding: 2px 2px 8px;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+    }
+    .hour-card {
+      scroll-snap-align: start;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 12px 9px;
+      text-align: center;
+      background: #fff;
+    }
+    .hour {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .icon { font-size: 27px; margin: 6px 0 2px; }
+    .t { font-weight: 800; font-size: 18px; }
+    .rain { font-size: 12px; margin-top: 4px; color: #2563eb; font-weight: 700; }
+    .tipbox {
+      border-radius: 15px;
+      padding: 14px;
+      background: var(--soft);
+      font-size: 15px;
+    }
+    .tipbox ul { margin: 8px 0 0; padding-left: 20px; }
+    .tipbox li { margin: 4px 0; }
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button, a.btn {
+      appearance: none;
+      border: 0;
+      border-radius: 14px;
+      min-height: 48px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+    }
+    a.btn {
+      background: #eef1f5;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .error {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      color: #9f1239;
+      padding: 12px;
+      border-radius: 14px;
+      margin-top: 12px;
+      display: none;
+      font-size: 14px;
+    }
+    .notice {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+    .loading {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    @media (max-width: 480px) {
+      .wrap { padding: 12px 10px 28px; }
+      .hero { padding: 18px 14px; border-radius: 20px; }
+      .now-grid { grid-template-columns: 1fr; }
+      .trip-summary { grid-template-columns: repeat(3, 1fr); }
+      .section { padding: 15px; }
+      .buttons { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>🎢 에버랜드 수학여행 날씨</h1>
+    <div class="sub">2026년 10월 1일(목) · 경기도 용인시 에버랜드 기준</div>
+
+    <div class="now-grid">
+      <div class="now-main">
+        <div class="loading" id="nowLoading">날씨 불러오는 중...</div>
+        <div id="nowContent" style="display:none">
+          <div class="now-temp"><span id="nowTemp">--</span>°</div>
+          <div class="weather-label"><span id="nowIcon">🌤️</span> <span id="nowLabel">--</span></div>
+        </div>
+      </div>
+      <div class="now-side">
+        <div class="metric"><span>체감</span><b id="feels">--°</b></div>
+        <div class="metric"><span>습도</span><b id="humidity">--%</b></div>
+        <div class="metric"><span>바람</span><b id="wind">-- km/h</b></div>
+        <div class="metric"><span>현재 강수</span><b id="precipNow">-- mm</b></div>
+      </div>
+    </div>
+
+    <div class="error" id="errorBox">
+      날씨를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>📅 수학여행 당일 한눈에 보기</h2>
+    <div class="trip-summary">
+      <div class="summary-box">
+        <div class="small">최저 / 최고</div>
+        <div class="big" id="minmax">-- / --</div>
+      </div>
+      <div class="summary-box">
+        <div class="small">최대 비 확률</div>
+        <div class="big" id="rainMax">--%</div>
+      </div>
+      <div class="summary-box">
+        <div class="small">최대 바람</div>
+        <div class="big" id="windMax">--</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>🕒 시간대별 날씨</h2>
+    <div class="hourly" id="hourly">
+      <div class="hour-card">불러오는 중...</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>🎒 오늘 준비하면 좋은 것</h2>
+    <div class="tipbox">
+      <div id="tipHeadline"><b>예보를 확인하고 준비물을 알려드릴게요.</b></div>
+      <ul id="tips"></ul>
+    </div>
+
+    <div class="buttons">
+      <button type="button" onclick="loadWeather()">↻ 최신 날씨 새로고침</button>
+      <a class="btn" href="https://www.weather.go.kr/w/index.do" target="_blank" rel="noopener">기상청 공식 날씨 확인</a>
+    </div>
+
+    <div class="status" id="updated">업데이트 시간 확인 중...</div>
+    <div class="notice">
+      예보는 바뀔 수 있습니다. 특히 비 예보는 출발 당일 아침에 다시 확인하세요.
+    </div>
+  </section>
+</div>
+
+<script>
+const LAT = 37.2941;
+const LON = 127.2021;
+const TRIP_DATE = "2026-10-01";
+const API = "https://api.open-meteo.com/v1/forecast"
+  + "?latitude=" + LAT
+  + "&longitude=" + LON
+  + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,precipitation,wind_speed_10m,wind_gusts_10m"
+  + "&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m"
+  + "&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max"
+  + "&timezone=Asia%2FSeoul&forecast_days=3&models=best_match";
+
+function weatherInfo(code) {
+  const map = {
+    0:["☀️","맑음"],
+    1:["🌤️","대체로 맑음"],
+    2:["⛅","구름 조금"],
+    3:["☁️","흐림"],
+    45:["🌫️","안개"], 48:["🌫️","안개"],
+    51:["🌦️","약한 이슬비"], 53:["🌦️","이슬비"], 55:["🌧️","강한 이슬비"],
+    61:["🌦️","약한 비"], 63:["🌧️","비"], 65:["🌧️","강한 비"],
+    71:["🌨️","약한 눈"], 73:["🌨️","눈"], 75:["❄️","강한 눈"],
+    80:["🌦️","소나기"], 81:["🌧️","소나기"], 82:["⛈️","강한 소나기"],
+    95:["⛈️","뇌우"], 96:["⛈️","뇌우"], 99:["⛈️","강한 뇌우"]
+  };
+  return map[code] || ["🌤️","날씨"];
+}
+
+function n(v, digits=0) {
+  return Number.isFinite(Number(v)) ? Number(v).toFixed(digits) : "--";
+}
+
+function buildTips(day, hourly) {
+  const tips = [];
+  const rain = Number(day.precipitation_probability_max ?? 0);
+  const minT = Number(day.temperature_2m_min);
+  const maxT = Number(day.temperature_2m_max);
+  const wind = Number(day.wind_speed_10m_max);
+
+  if (rain >= 50) tips.push("☔ 작은 우산이나 가벼운 우비를 챙기세요.");
+  else if (rain >= 30) tips.push("🌂 비 가능성이 있으니 접이식 우산이 있으면 좋습니다.");
+  else tips.push("☔ 비 가능성은 높지 않지만 아침에 한 번 더 확인하세요.");
+
+  if (minT <= 15) tips.push("🧥 아침·저녁용 얇은 겉옷을 챙기세요.");
+  else if (minT <= 19) tips.push("🧥 얇은 겉옷이 있으면 편합니다.");
+
+  if (maxT >= 25) tips.push("🧢 낮에는 더울 수 있으니 모자와 물을 챙기세요.");
+  else tips.push("💧 오래 걸으니 물은 꼭 챙기세요.");
+
+  if (wind >= 25) tips.push("💨 바람이 강할 수 있으니 모자와 소지품을 잘 챙기세요.");
+
+  tips.push("👟 하루 종일 걷기 편한 운동화를 신으세요.");
+
+  document.getElementById("tips").innerHTML = tips.map(x => `<li>${x}</li>`).join("");
+  document.getElementById("tipHeadline").innerHTML =
+    rain >= 50 ? "<b>비 대비가 중요해요!</b>" :
+    maxT >= 25 ? "<b>낮에는 더울 수 있어요.</b>" :
+    "<b>가볍고 편하게 준비하세요.</b>";
+}
+
+function getTripDay(data) {
+  const i = data.daily.time.indexOf(TRIP_DATE);
+  if (i < 0) return null;
+  const d = {};
+  Object.keys(data.daily).forEach(k => {
+    d[k] = Array.isArray(data.daily[k]) ? data.daily[k][i] : data.daily[k];
+  });
+  return d;
+}
+
+function renderHourly(data) {
+  const wantedHours = [7,9,11,13,15,17,19];
+  const cards = [];
+  data.hourly.time.forEach((iso, i) => {
+    if (!iso.startsWith(TRIP_DATE)) return;
+    const hour = Number(iso.slice(11,13));
+    if (!wantedHours.includes(hour)) return;
+    const [icon] = weatherInfo(data.hourly.weather_code[i]);
+    cards.push(`
+      <div class="hour-card">
+        <div class="hour">${String(hour).padStart(2,"0")}:00</div>
+        <div class="icon">${icon}</div>
+        <div class="t">${n(data.hourly.temperature_2m[i])}°</div>
+        <div class="rain">비 ${n(data.hourly.precipitation_probability[i])}%</div>
+      </div>
+    `);
+  });
+  document.getElementById("hourly").innerHTML =
+    cards.length ? cards.join("") : '<div class="hour-card">당일 시간대 예보가 아직 없습니다.</div>';
+}
+
+async function loadWeather() {
+  const error = document.getElementById("errorBox");
+  error.style.display = "none";
+  document.getElementById("nowLoading").style.display = "block";
+  document.getElementById("nowContent").style.display = "none";
+
+  try {
+    const res = await fetch(API, { cache: "no-store" });
+    if (!res.ok) throw new Error("API error");
+    const data = await res.json();
+
+    const [icon, label] = weatherInfo(data.current.weather_code);
+    document.getElementById("nowTemp").textContent = n(data.current.temperature_2m);
+    document.getElementById("nowIcon").textContent = icon;
+    document.getElementById("nowLabel").textContent = label;
+    document.getElementById("feels").textContent = n(data.current.apparent_temperature) + "°";
+    document.getElementById("humidity").textContent = n(data.current.relative_humidity_2m) + "%";
+    document.getElementById("wind").textContent = n(data.current.wind_speed_10m) + " km/h";
+    document.getElementById("precipNow").textContent = n(data.current.precipitation, 1) + " mm";
+
+    document.getElementById("nowLoading").style.display = "none";
+    document.getElementById("nowContent").style.display = "block";
+
+    const day = getTripDay(data);
+    if (day) {
+      document.getElementById("minmax").textContent =
+        n(day.temperature_2m_min) + "° / " + n(day.temperature_2m_max) + "°";
+      document.getElementById("rainMax").textContent =
+        n(day.precipitation_probability_max) + "%";
+      document.getElementById("windMax").textContent =
+        n(day.wind_speed_10m_max) + " km/h";
+      buildTips(day, data.hourly);
+    } else {
+      document.getElementById("minmax").textContent = "예보 대기";
+      document.getElementById("rainMax").textContent = "--";
+      document.getElementById("windMax").textContent = "--";
+    }
+
+    renderHourly(data);
+
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul", month: "numeric", day: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+    document.getElementById("updated").textContent =
+      "마지막 확인: " + fmt.format(now) + " · 페이지를 열 때 자동으로 최신 예보를 불러옵니다.";
+  } catch (e) {
+    document.getElementById("nowLoading").style.display = "none";
+    error.style.display = "block";
+    document.getElementById("updated").textContent = "날씨 연결 실패";
+  }
+}
+
+loadWeather();
+setInterval(loadWeather, 10 * 60 * 1000);
+</script>
+</body>
+</html>
